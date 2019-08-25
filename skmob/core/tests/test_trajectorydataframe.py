@@ -46,3 +46,12 @@ class TestTrajectoryDataFrame:
         assert tdf._is_trajdataframe()
         assert tdf.shape == (217653, EXPECTED_NUM_OF_COLUMNS_IN_TDF)
         assert list(tdf[UID].unique()) == [1, 5]
+
+    def test_timezone_conversion(self):
+        tdf = skmob.TrajDataFrame(self.default_data_df, latitude='latitude', datetime='hour', user_id='user')
+        tdf.timezone_conversion(from_timezone='Europe/London', to_timezone='Europe/Berlin')
+        assert tdf[DATETIME][0] == pd.Timestamp('2008-10-23 14:53:05')
+
+    def test_slicing_a_tdf_returns_a_tdf(self):
+        tdf = skmob.TrajDataFrame(self.default_data_df, latitude='latitude', datetime='hour', user_id='user')
+        assert type(tdf) == type(tdf[tdf[UID] == 1][:1])
