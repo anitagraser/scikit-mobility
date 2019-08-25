@@ -1,0 +1,20 @@
+name: skmob
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - numpy
+  - pandas
+  - geopandas
+  - scipy
+  - tqdm
+  - osmnx
+  - scikit-learn
+  - statsmodels
+  - folium
+  - matplotlib
+  - geojson
+  - shapely
+  - geopy
+  - fiona

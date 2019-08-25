@@ -19,7 +19,7 @@ class TrajSeries(pd.Series):
         return TrajDataFrame
 
 
-class TrajDataFrame(pd.DataFrame):
+class TrajDataFrame(gpd.GeoDataFrame):
 
     _metadata = ['_parameters', '_crs'] # All the metadata that should be accessible must be also in the metadata method
 
@@ -61,11 +61,18 @@ class TrajDataFrame(pd.DataFrame):
         else:
             raise TypeError('DataFrame constructor called with incompatible data and dtype: {e}'.format(e=type(data)))
 
-        super(TrajDataFrame, self).__init__(tdf, columns=columns)
-
         # Check crs consistency
         if crs is None:
             warn("crs will be set to the default crs WGS84 (EPSG:4326).")
+
+        if isinstance(data, pd.core.internals.BlockManager):
+            super(TrajDataFrame, self).__init__(tdf, columns=columns, crs=crs)
+        else:
+            try:
+                geometry = [Point(xy) for xy in zip(tdf[constants.LONGITUDE], tdf[constants.LATITUDE])]
+            except TypeError:
+                geometry = [Point(row[longitude], row[latitude]) for row in data]
+            super(TrajDataFrame, self).__init__(tdf, columns=columns, crs=crs, geometry=geometry)
 
         if not isinstance(crs, dict):
             raise TypeError('crs must be a dict type.')
@@ -82,7 +89,8 @@ class TrajDataFrame(pd.DataFrame):
 
     def _has_traj_columns(self):
 
-        if (constants.DATETIME in self) and (constants.LATITUDE in self) and (constants.LONGITUDE in self):
+        if (constants.DATETIME in self) and (constants.LATITUDE in self) and (constants.LONGITUDE in self) \
+                and (constants.GEOMETRY in self):
             return True
 
         return False
@@ -91,7 +99,8 @@ class TrajDataFrame(pd.DataFrame):
 
         if ((constants.DATETIME in self) and pd.core.dtypes.common.is_datetime64_any_dtype(self[constants.DATETIME]))\
                 and ((constants.LONGITUDE in self) and pd.core.dtypes.common.is_float_dtype(self[constants.LONGITUDE])) \
-                and ((constants.LATITUDE in self) and pd.core.dtypes.common.is_float_dtype(self[constants.LATITUDE])):
+                and ((constants.LATITUDE in self) and pd.core.dtypes.common.is_float_dtype(self[constants.LATITUDE]))\
+                and ((constants.GEOMETRY in self) and isinstance(self[constants.GEOMETRY][0], Point)):
 
             return True
 
